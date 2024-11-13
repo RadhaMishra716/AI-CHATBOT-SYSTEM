@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot System Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Common CSS Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            margin: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* Tabbed Navigation */
+        .tab {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            background-color: #ddd;
+            border-radius: 5px;
+        }
+
+        .tab.active {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>AI Chatbot System Dashboard</h1>
+
+    <!-- Tabs for navigation -->
+    <div>
+        <span class="tab active" onclick="showTab('admin')">Admin Dashboard</span>
+        <span class="tab" onclick="showTab('user')">User Dashboard</span>
+    </div>
+
+    <div class="container">
+
+        <!-- Admin Dashboard Tab -->
+        <div id="admin" class="tab-content active">
+            <section class="card">
+                <h2>Chatbot Configuration</h2>
+                <form id="configForm">
+                    <label for="responseTemplate">Response Template:</label>
+                    <textarea id="responseTemplate" placeholder="Enter response template..."></textarea>
+                    <label for="knowledgeBase">Knowledge Base Entry:</label>
+                    <textarea id="knowledgeBase" placeholder="Enter knowledge base entry..."></textarea>
+                    <button type="submit">Save Configuration</button>
+                </form>
+                <p id="configMessage"></p>
+            </section>
+
+            <section class="card">
+                <h2>Conversation Data Analysis</h2>
+                <canvas id="interactionChart"></canvas>
+            </section>
+
+            <section class="card">
+                <h2>Algorithm Improvement</h2>
+                <p>Performance based on feedback metrics:</p>
+                <button onclick="updateAlgorithm()">Update Algorithm</button>
+                <p id="algorithmMessage"></p>
+            </section>
+        </div>
+
+        <!-- User Dashboard Tab -->
+        <div id="user" class="tab-content">
+            <section class="card">
+                <h2>Interaction History</h2>
+                <table id="interactionTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Query</th>
+                            <th>Response</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- History will be populated here by JavaScript -->
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="card">
+                <h2>Feedback</h2>
+                <form id="feedbackForm">
+                    <label for="feedbackText">Feedback:</label>
+                    <textarea id="feedbackText" placeholder="Enter feedback..."></textarea>
+                    <button type="submit">Submit Feedback</button>
+                </form>
+                <p id="feedbackMessage"></p>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Tab Navigation Script
+        function showTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+        }
+
+        // Admin Dashboard JavaScript
+        document.getElementById("configForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const responseTemplate = document.getElementById("responseTemplate").value;
+            const knowledgeBase = document.getElementById("knowledgeBase").value;
+
+            fetch("/admin/configure", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ responseTemplate, knowledgeBase })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("configMessage").innerText = "Configuration saved!";
+            });
+        });
+
+        function updateAlgorithm() {
+            fetch("/admin/algorithm/update", { method: "POST" })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("algorithmMessage").innerText = "Algorithm updated successfully!";
+                });
+        }
+
+        const ctx = document.getElementById('interactionChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Positive', 'Neutral', 'Negative'],
+                datasets: [{
+                    label: 'User Interactions',
+                    data: [12, 19, 3],
+                    backgroundColor: ['#4CAF50', '#FFC107', '#F44336']
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        // User Dashboard JavaScript
+        fetch("/user/interactions")
+            .then(response => response.json())
+            .then(data => {
+                const interactionTable = document.getElementById("interactionTable").getElementsByTagName("tbody")[0];
+                data.forEach(interaction => {
+                    const row = interactionTable.insertRow();
+                    row.insertCell(0).innerText = interaction.date;
+                    row.insertCell(1).innerText = interaction.query;
+                    row.insertCell(2).innerText = interaction.response;
+                });
+            });
+
+        document.getElementById("feedbackForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const feedbackText = document.getElementById("feedbackText").value;
+
+            fetch("/user/feedback", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ feedbackText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("feedbackMessage").innerText = "Feedback submitted!";
+            });
+        });
+    </script>
+</body>
+</html>
